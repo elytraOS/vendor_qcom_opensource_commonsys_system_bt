@@ -826,6 +826,11 @@ static void btif_report_source_codec_state(UNUSED_ATTR void* p_data,
     BTIF_TRACE_DEBUG("%s codec config changed BDA:0x%02X%02X%02X%02X%02X%02X", __func__,
                    bd_addr->address[0], bd_addr->address[1], bd_addr->address[2],
                    bd_addr->address[3], bd_addr->address[4], bd_addr->address[5]);
+    int i = btif_av_idx_by_bdaddr(bd_addr);
+    if (i < btif_max_av_clients && btif_av_cb[i].reconfig_pending) {
+      BTIF_TRACE_DEBUG("%s: reconfig pending, do not update codec config to app",__func__);
+      return;
+    }
     HAL_CBACK(bt_av_src_callbacks, audio_config_cb, *bd_addr, codec_config,
               codecs_local_capabilities, codecs_selectable_capabilities);
   }
@@ -2323,6 +2328,7 @@ static bool btif_av_state_opened_handler(btif_sm_event_t event, void* p_data,
       if (!btif_av_cb[index].reconfig_event) {
         btif_av_cb[index].reconfig_pending = false;
       }
+      btif_report_source_codec_state(p_data,&btif_av_cb[index].peer_bda);
        btif_ahim_update_session_params(SessionParamType::MTU);
       //bluetooth::audio::a2dp::update_session_params(SessionParamType::MTU);
     } break;

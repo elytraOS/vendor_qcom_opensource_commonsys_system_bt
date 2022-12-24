@@ -827,3 +827,15 @@ void BTA_GATTC_Refresh(const RawAddress& remote_bda) {
   do_in_bta_thread(FROM_HERE,
                    base::Bind(&bta_gattc_process_api_refresh, remote_bda));
 }
+
+/*******************************************************************************
+ *
+ * Function         BTA_GATTC_ResetGattDb
+ *
+ * Description      Resets GATT Database for the device.
+ *
+ ******************************************************************************/
+void BTA_GATTC_ResetGattDb(const RawAddress& remote_bda) {
+  do_in_bta_thread(FROM_HERE,
+                   base::Bind(&bta_gattc_cache_reset, remote_bda));
+}

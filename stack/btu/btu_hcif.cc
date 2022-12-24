@@ -1458,6 +1458,10 @@ static void btu_hcif_hdl_command_status(uint16_t opcode, uint8_t status,
         if ((opcode & HCI_GRP_VENDOR_SPECIFIC) == HCI_GRP_VENDOR_SPECIFIC)
           btm_vsc_complete(&status, opcode, 1,
                            (tBTM_VSC_CMPL_CB*)p_vsc_status_cback);
+#ifdef VLOC_FEATURE
+          btu_vendor_hcif_hdl_command_status(opcode, status,
+                                        p_cmd);
+#endif
       }
   }
 }

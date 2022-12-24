@@ -117,9 +117,9 @@ BluetoothAudioCtrlAck LeAudioTransport::StartRequest(bool is_low_latency,
   LOG(INFO) << __func__ << ": is_low_latency: " << is_low_latency
                         << ", direction: " << loghex(direction)
                         << ", profile: " << loghex(profile);
+  is_pending_start_request_ = true;
   btif_ahim_process_request(A2DP_CTRL_CMD_START, profile, direction);
   lea_pending_cmd_ = A2DP_CTRL_CMD_START;
-  is_pending_start_request_ = true;
   return status;
 }
 

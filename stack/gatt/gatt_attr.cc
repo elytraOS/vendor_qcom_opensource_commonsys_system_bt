@@ -1385,19 +1385,6 @@ static tGATT_STATUS gatt_sr_write_cl_supp_feat(uint16_t conn_id,
     }
   }
 
-  //Update EATT support
-  tBTM_SEC_DEV_REC* p_dev_rec = btm_find_dev(tcb.peer_bda);
-  if (!tcb.is_eatt_supported && (gatt_attr_db[0].value[0] == SR_EATT_SUPPORTED) &&
-     ((tcb.cl_supp_feat & CL_EATT_SUPPORTED) == CL_EATT_SUPPORTED) &&
-     (p_dev_rec && (p_dev_rec->sec_flags & BTM_SEC_LE_ENCRYPTED))) {
-    VLOG(1) << __func__ << " Set EATT Support";
-    tcb.is_eatt_supported = true;
-    gatt_eatt_bcb_alloc(&tcb, L2CAP_ATT_CID, false, false);
-    //Add bda to EATT devices storage
-    btif_storage_add_eatt_support(tcb.peer_bda);
-    gatt_add_eatt_device(tcb.peer_bda);
-  }
-
   // get current robust caching status before setting new one
   bool curr_caching_state = gatt_sr_is_cl_robust_caching_supported(tcb);
 
@@ -1412,6 +1399,19 @@ static tGATT_STATUS gatt_sr_write_cl_supp_feat(uint16_t conn_id,
   }
   // TODO(hylo): save data as byte array
   btif_storage_set_cl_supp_feat(tcb.peer_bda, tcb.cl_supp_feat);
+
+  //Update EATT support
+  tBTM_SEC_DEV_REC* p_dev_rec = btm_find_dev(tcb.peer_bda);
+  if (!tcb.is_eatt_supported && (gatt_attr_db[0].value[0] == SR_EATT_SUPPORTED) &&
+     ((tcb.cl_supp_feat & CL_EATT_SUPPORTED) == CL_EATT_SUPPORTED) &&
+     (p_dev_rec && (p_dev_rec->sec_flags & BTM_SEC_LE_ENCRYPTED))) {
+    VLOG(1) << __func__ << " Set EATT Support";
+    tcb.is_eatt_supported = true;
+    gatt_eatt_bcb_alloc(&tcb, L2CAP_ATT_CID, false, false);
+    //Add bda to EATT devices storage
+    btif_storage_add_eatt_support(tcb.peer_bda);
+    gatt_add_eatt_device(tcb.peer_bda);
+  }
 
   // get new robust caching status after setting new one
   bool new_caching_state = gatt_sr_is_cl_robust_caching_supported(tcb);

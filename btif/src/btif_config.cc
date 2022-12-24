@@ -690,32 +690,37 @@ static void btif_config_write(UNUSED_ATTR uint16_t event,
 static void btif_config_remove_unpaired(config_t* conf) {
   CHECK(conf != NULL);
   int paired_devices = 0;
-
+  int entry=0;
   // The paired config used to carry information about
   // discovered devices during regular inquiry scans.
   // We remove these now and cache them in memory instead.
   const config_section_node_t* snode = config_section_begin(conf);
+
+  BTIF_TRACE_WARNING("%s", __func__);
+
   while (snode != config_section_end(conf)) {
-    const char* section = config_section_name(snode);
-    if (RawAddress::IsValidAddress(section)) {
-      if (!config_has_key(conf, section, "LinkKey") &&
-          !config_has_key(conf, section, "LE_KEY_PENC") &&
-          !config_has_key(conf, section, "LE_KEY_PID") &&
-          !config_has_key(conf, section, "LE_KEY_PCSRK") &&
-          !config_has_key(conf, section, "LE_KEY_LENC") &&
-          !config_has_key(conf, section, "LE_KEY_LCSRK") &&
-          !config_has_key(conf, section, "AvrcpCtVersion") &&
-          !config_has_key(conf, section, "AvrcpFeatures") &&
-          !config_has_key(conf, section, "TwsPlusPeerAddr") &&
-          !config_has_key(conf, section, "Codecs")) {
+    section_t* section = config_section(snode);
+    entry++;
+    if (RawAddress::IsValidAddress(section->name)) {
+      if (!section_has_key(section, "LinkKey") &&
+          !section_has_key(section, "LE_KEY_PENC") &&
+          !section_has_key(section, "LE_KEY_PID") &&
+          !section_has_key(section, "LE_KEY_PCSRK") &&
+          !section_has_key(section, "LE_KEY_LENC") &&
+          !section_has_key(section, "LE_KEY_LCSRK") &&
+          !section_has_key(section, "AvrcpCtVersion") &&
+          !section_has_key(section, "AvrcpFeatures") &&
+          !section_has_key(section, "TwsPlusPeerAddr") &&
+          !section_has_key(section, "Codecs")) {
         snode = config_section_next(snode);
-        config_remove_section(conf, section);
+        config_remove_section_optimal(conf, section);
         continue;
       }
       paired_devices++;
     }
     snode = config_section_next(snode);
   }
+  BTIF_TRACE_WARNING("%s: entry %d: paired_devices: %d", __func__, entry, paired_devices);
 
   // should only happen once, at initial load time
   if (btif_config_devices_loaded == -1)

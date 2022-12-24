@@ -887,6 +887,15 @@ extern void BTA_GATTC_ConfigureMTU(uint16_t conn_id, uint16_t mtu,
                                    void* cb_data);
 
 /*******************************************************************************
+ *
+ * Function         BTA_GATTC_ResetGattDb
+ *
+ * Description      Resets GATT Database for the device.
+ *
+ ******************************************************************************/
+extern void BTA_GATTC_ResetGattDb(const RawAddress& remote_bda);
+
+/*******************************************************************************
  *  BTA GATT Server API
  ******************************************************************************/
 

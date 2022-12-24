@@ -1388,14 +1388,22 @@ tBTM_STATUS BTM_SetEncryption(const RawAddress& bd_addr,
 
   if (transport == BT_TRANSPORT_BR_EDR &&
       (p_dev_rec->sec_flags & BTM_SEC_ENCRYPTED)) {
-    BTM_TRACE_EVENT("Security Manager: BTM_SetEncryption already encrypted");
+    BTM_TRACE_EVENT("Security Manager: BTM_SetEncryption BR/EDR link already encrypted");
 
     if (*p_callback)
       (*p_callback)(&bd_addr, transport, p_ref_data, BTM_SUCCESS);
 
     return (BTM_SUCCESS);
   }
+ if (transport == BT_TRANSPORT_LE &&
+      (p_dev_rec->sec_flags & BTM_SEC_LE_ENCRYPTED)) {
+    BTM_TRACE_EVENT("Security Manager: BTM_SetEncryption LE link already encrypted");
 
+    if (*p_callback)
+      (*p_callback)(&bd_addr, transport, p_ref_data, BTM_SUCCESS);
+
+    return (BTM_SUCCESS);
+  }
   /* enqueue security request if security is active */
   if (p_dev_rec->p_callback || (p_dev_rec->sec_state != BTM_SEC_STATE_IDLE)) {
     BTM_TRACE_WARNING(

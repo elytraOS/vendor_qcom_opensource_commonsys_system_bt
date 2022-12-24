@@ -1568,8 +1568,8 @@ void bta_av_conn_chg(tBTA_AV_DATA* p_data) {
             APPL_TRACE_DEBUG("%s: new rc_acp_handle:%d, idx:%d", __func__,
                              p_cb->rc_acp_handle, p_cb->rc_acp_idx);
             p_rcb2->lidx = (BTA_AV_NUM_LINKS + 1);
-            APPL_TRACE_DEBUG("%s: rc2 handle:%d lidx:%d/%d", p_rcb2->handle,
-                             __func__, p_rcb2->lidx, p_cb->lcb[p_rcb2->lidx - 1].lidx);
+            APPL_TRACE_DEBUG("%s: rc2 handle:%d lidx:%d/%d", __func__,
+                             p_rcb2->handle, p_rcb2->lidx, p_cb->lcb[p_rcb2->lidx - 1].lidx);
           } else {
             /* clear RC ACP handle when rc is opened on the RC only ACP channel */
             APPL_TRACE_DEBUG("%s: clear rc ACP handle", __func__);

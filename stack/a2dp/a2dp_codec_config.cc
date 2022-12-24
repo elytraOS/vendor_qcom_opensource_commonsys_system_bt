@@ -1998,7 +1998,7 @@ uint8_t A2dp_SendSetConfigRspErrorCodeForPTS() {
 
   property_get("persist.vendor.bt.a2dp.set_config_error_code", value, "0");
 
-  int res = sscanf(value, "%hu", &error_code);
+  int res = sscanf(value, "%hhu", &error_code);
 
   APPL_TRACE_DEBUG("%s: res: %d", __func__, res);
   APPL_TRACE_DEBUG("%s: error_code: %d", __func__, error_code);

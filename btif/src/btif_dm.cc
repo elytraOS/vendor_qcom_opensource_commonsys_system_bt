@@ -708,6 +708,10 @@ void bond_state_changed(bt_status_t status, const RawAddress& bd_addr,
      bta_dm_reset_adv_audio_pairing_info(bd_addr);
    }
   }
+
+  if (state == BT_BOND_STATE_NONE) {
+    btif_stack_dev_unpaired(bd_addr);
+  }
 #endif
 
   if ((pairing_cb.state == state) && (state == BT_BOND_STATE_BONDING)) {
@@ -748,6 +752,8 @@ void bond_state_changed(bt_status_t status, const RawAddress& bd_addr,
     update_pce_entry_after_cancelling_bonding(bd_addr);
     // Update Map 1.4 entry, set rebonded to true
     update_mce_entry_after_cancelling_bonding(bd_addr);
+    // remove remote GATT database
+    BTA_GATTC_ResetGattDb(bd_addr);
   }
 }
 
@@ -2180,7 +2186,6 @@ static void btif_dm_upstreams_evt(uint16_t event, char* p_param) {
 #endif
       btif_hearing_aid_get_interface()->RemoveDevice(bd_addr);
       btif_storage_remove_bonded_device(&bd_addr);
-      btif_stack_dev_unpaired(bd_addr);
       BTA_DmResetPairingflag(bd_addr);
       bond_state_changed(BT_STATUS_SUCCESS, bd_addr, BT_BOND_STATE_NONE);
       break;

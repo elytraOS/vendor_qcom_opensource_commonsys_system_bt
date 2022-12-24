@@ -19,6 +19,7 @@
 #include <stdbool.h>
 #include "stack/include/bt_types.h"
 #include "bt_target.h"
+#include "osi/include/list.h"
 
 // The default section name to use if a key/value pair is not defined within
 // a section.
@@ -26,6 +27,12 @@
 
 typedef struct config_t config_t;
 typedef struct config_section_node_t config_section_node_t;
+
+typedef struct {
+  char* name;
+  list_t* entries;
+} section_t;
+
 #if (BT_IOT_LOGGING_ENABLED == TRUE)
 typedef int (*compare_func)(const char* first, const char* second);
 #endif
@@ -167,6 +174,11 @@ const config_section_node_t* config_section_next(
 // pointer will remain valid until |config_free| is called. |iter| may not be
 // NULL and must not equal the value returned by |config_section_end|.
 const char* config_section_name(const config_section_node_t* iter);
+
+//Below APIs are used to improve config search operations for sections.
+section_t* config_section(const config_section_node_t* node);
+bool config_remove_section_optimal(config_t* config, section_t* section);
+bool section_has_key(const section_t* section, const char* key);
 
 #if (BT_IOT_LOGGING_ENABLED == TRUE)
 // Sorts the entries in each section of config by entry key.

@@ -286,7 +286,7 @@ bool bta_gattc_hash_write(const Octet16& hash, const gatt::Database& database) {
  *
  ******************************************************************************/
 void bta_gattc_cache_reset(const RawAddress& server_bda) {
-  VLOG(1) << __func__;
+  VLOG(1) << __func__ << " Device :" << server_bda;
   char fname[255] = {0};
   bta_gattc_generate_cache_file_name(fname, sizeof(fname), server_bda);
   unlink(fname);
