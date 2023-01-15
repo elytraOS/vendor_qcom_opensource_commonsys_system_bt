@@ -144,6 +144,7 @@ cc_library_static {
         "btm/ble_advertiser_hci_interface.cc",
         "btm/btm_acl.cc",
         "btm/btm_ble.cc",
+        "btm/btm_ble_direction_finder.cc",
         "btm/btm_ble_addr.cc",
         "btm/btm_ble_adv_filter.cc",
         "btm/btm_ble_batchscan.cc",

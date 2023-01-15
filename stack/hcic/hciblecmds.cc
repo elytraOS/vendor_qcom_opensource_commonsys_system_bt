@@ -1405,3 +1405,93 @@ void btsnd_hcic_ble_set_default_subrate(uint16_t subrate_min,
 
   btu_hcif_send_cmd(LOCAL_BR_EDR_CONTROLLER_ID, p);
 }
+
+#ifdef DIR_FINDING_FEATURE
+void btsnd_hcic_ble_set_conn_cte_rx_params(uint16_t conn_handle,
+                                           uint8_t sampling_enable,
+                                           uint8_t slot_durations,
+                                           uint8_t switching_pattern_len,
+                                           std::vector<uint8_t> antenna_ids,
+                                           base::Callback<void(uint8_t*, uint16_t)> cb) {
+  uint16_t param_len = HCIC_PARAM_SIZE_BLE_SET_CONN_CTE_RX_PARAMS_FIXED +
+                         (switching_pattern_len * sizeof(uint8_t));
+  uint8_t param[param_len];
+  uint8_t* pp = param;
+
+  UINT16_TO_STREAM(pp, conn_handle);
+  UINT8_TO_STREAM(pp, sampling_enable);
+  UINT8_TO_STREAM(pp, slot_durations);
+  UINT8_TO_STREAM(pp, switching_pattern_len);
+
+  ARRAY_TO_STREAM(pp, antenna_ids, switching_pattern_len);
+
+  btu_hcif_send_cmd_with_cb(FROM_HERE, HCI_BLE_SET_CONN_CTE_RX_PARAMS, param,
+                            param_len, std::move(cb));
+}
+
+void btsnd_hcic_ble_set_conn_cte_tx_params(uint16_t conn_handle,
+                                           uint8_t cte_types,
+                                           uint8_t switching_pattern_len,
+                                           std::vector<uint8_t> antenna_ids,
+                                           base::Callback<void(uint8_t*, uint16_t)> cb) {
+  uint16_t param_len = HCIC_PARAM_SIZE_BLE_SET_CONN_CTE_TX_PARAMS_FIXED +
+                       (switching_pattern_len * sizeof(uint8_t));
+  uint8_t param[param_len];
+  uint8_t* pp = param;
+
+  UINT16_TO_STREAM(pp, conn_handle);
+  UINT8_TO_STREAM(pp, cte_types);
+  UINT8_TO_STREAM(pp, switching_pattern_len);
+
+  ARRAY_TO_STREAM(pp, antenna_ids, switching_pattern_len);
+
+  btu_hcif_send_cmd_with_cb(FROM_HERE, HCI_BLE_SET_CONN_CTE_TX_PARAMS, param,
+                            param_len, std::move(cb));
+}
+
+void btsnd_hcic_ble_set_conn_cte_req_enable(uint16_t conn_handle,
+                                            uint8_t enable,
+                                            uint16_t cte_req_int,
+                                            uint8_t req_cte_len,
+                                            uint8_t req_cte_type,
+                                            base::Callback<void(uint8_t*, uint16_t)> cb) {
+  uint8_t param[HCIC_PARAM_SIZE_BLE_SET_CONN_CTE_REQ_ENABLE];
+  uint8_t* pp = param;
+
+  UINT16_TO_STREAM(pp, conn_handle);
+  UINT8_TO_STREAM(pp, enable);
+  UINT16_TO_STREAM(pp, cte_req_int);
+  UINT8_TO_STREAM(pp, req_cte_len);
+  UINT8_TO_STREAM(pp, req_cte_type);
+
+  btu_hcif_send_cmd_with_cb(FROM_HERE, HCI_BLE_SET_CONN_CTE_REQ_ENABLE, param,
+                            HCIC_PARAM_SIZE_BLE_SET_CONN_CTE_REQ_ENABLE, std::move(cb));
+}
+
+void btsnd_hcic_ble_set_conn_cte_rsp_enable(uint16_t conn_handle,
+                                            uint8_t enable,
+                                            base::Callback<void(uint8_t*, uint16_t)> cb) {
+  uint16_t param_len = HCIC_PARAM_SIZE_BLE_SET_CONN_CTE_RSP_ENABLE;
+  uint8_t param[param_len];
+  uint8_t* pp = param;
+
+  UINT16_TO_STREAM(pp, conn_handle);
+  UINT8_TO_STREAM(pp, enable);
+
+  btu_hcif_send_cmd_with_cb(FROM_HERE, HCI_BLE_SET_CONN_CTE_RSP_ENABLE, param,
+                            param_len, std::move(cb));
+}
+
+void btsnd_hcic_ble_read_antenna_info() {
+  BT_HDR* p = (BT_HDR*)osi_malloc(HCI_CMD_BUF_SIZE);
+  uint8_t* pp = (uint8_t*)(p + 1);
+
+  p->len = HCIC_PREAMBLE_SIZE + HCIC_PARAM_SIZE_BLE_READ_ANTENNA_INFO;
+  p->offset = 0;
+
+  UINT16_TO_STREAM(pp, HCI_BLE_READ_ANTENNA_INFO);
+  UINT8_TO_STREAM(pp, HCIC_PARAM_SIZE_BLE_READ_ANTENNA_INFO);
+
+  btu_hcif_send_cmd(LOCAL_BR_EDR_CONTROLLER_ID, p);
+}
+#endif //DIR_FINDING_FEATURE

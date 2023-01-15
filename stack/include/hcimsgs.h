@@ -767,6 +767,12 @@ extern void btsnd_hcic_vendor_spec_cmd(void* buffer, uint16_t opcode,
 #define HCIC_PARAM_SIZE_BLE_SUBRATE_REQ 12
 #define HCIC_PARAM_SIZE_BLE_SET_DEFAULT_SUBRATE 10
 
+#define HCIC_PARAM_SIZE_BLE_SET_CONN_CTE_RX_PARAMS_FIXED 5
+#define HCIC_PARAM_SIZE_BLE_SET_CONN_CTE_TX_PARAMS_FIXED 4
+#define HCIC_PARAM_SIZE_BLE_SET_CONN_CTE_REQ_ENABLE 7
+#define HCIC_PARAM_SIZE_BLE_SET_CONN_CTE_RSP_ENABLE 3
+#define HCIC_PARAM_SIZE_BLE_READ_ANTENNA_INFO 0
+
 /* ULP HCI command */
 extern void btsnd_hcic_ble_set_evt_mask(BT_EVENT_MASK event_mask);
 
@@ -1120,5 +1126,23 @@ extern void btsnd_hcic_ble_subrate_request(uint16_t conn_handle, uint16_t subrat
 extern void btsnd_hcic_ble_set_default_subrate(uint16_t subrate_min, uint16_t subrate_max,
                                                uint16_t max_latency, uint16_t cont_num,
                                                uint16_t sup_tout);
+
+#ifdef DIR_FINDING_FEATURE
+extern void btsnd_hcic_ble_set_conn_cte_rx_params(uint16_t conn_handle, uint8_t sampling_enable,
+                                                  uint8_t slot_durations, uint8_t switching_pattern_len,
+                                                  std::vector<uint8_t> antenna_ids,
+                                                  base::Callback<void(uint8_t*, uint16_t)> cb);
+extern void btsnd_hcic_ble_set_conn_cte_tx_params(uint16_t conn_handle, uint8_t cte_types,
+                                                  uint8_t switching_pattern_len,
+                                                  std::vector<uint8_t> antenna_ids,
+                                                  base::Callback<void(uint8_t*, uint16_t)> cb);
+extern void btsnd_hcic_ble_set_conn_cte_req_enable(uint16_t conn_handle, uint8_t enable,
+                                                   uint16_t cte_req_int, uint8_t req_cte_len,
+                                                   uint8_t req_cte_type,
+                                                   base::Callback<void(uint8_t*, uint16_t)> cb);
+extern void btsnd_hcic_ble_set_conn_cte_rsp_enable(uint16_t conn_handle, uint8_t enable,
+                                                   base::Callback<void(uint8_t*, uint16_t)> cb);
+extern void btsnd_hcic_ble_read_antenna_info();
+#endif //DIR_FINDING_FEATURE
 
 #endif

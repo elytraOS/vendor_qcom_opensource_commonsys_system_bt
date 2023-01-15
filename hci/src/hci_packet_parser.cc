@@ -14,6 +14,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ *
  ******************************************************************************/
 
 #define LOG_TAG "bt_hci"
@@ -281,6 +285,18 @@ static void parse_ble_read_local_supported_features_response(
   buffer_allocator->free(response);
 }
 
+static void parse_ble_read_antenna_info_response(
+    BT_HDR* response, bt_antenna_info_t* antenna_info) {
+  uint8_t* stream = read_command_complete_header(
+      response, HCI_BLE_READ_ANTENNA_INFO,
+      sizeof(bt_antenna_info_t) /* bytes after */);
+  CHECK(stream != NULL);
+  STREAM_TO_ARRAY(antenna_info->as_array, stream,
+                  (int)sizeof(bt_antenna_info_t));
+
+  buffer_allocator->free(response);
+}
+
 static void parse_ble_read_resolving_list_size_response(
     BT_HDR* response, uint8_t* resolving_list_size_ptr) {
   uint8_t* stream = read_command_complete_header(
@@ -421,6 +437,7 @@ static const hci_packet_parser_t interface = {
     parse_ble_read_buffer_size_response,
     parse_ble_read_supported_states_response,
     parse_ble_read_local_supported_features_response,
+    parse_ble_read_antenna_info_response,
     parse_ble_read_resolving_list_size_response,
     parse_ble_read_suggested_default_data_length_response,
     parse_ble_read_maximum_advertising_data_length,

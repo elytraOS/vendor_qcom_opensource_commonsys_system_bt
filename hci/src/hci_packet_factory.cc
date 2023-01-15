@@ -14,6 +14,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ *
  ******************************************************************************/
 
 #include <base/logging.h>
@@ -156,6 +160,10 @@ static BT_HDR* make_ble_read_supported_states(void) {
 
 static BT_HDR* make_ble_read_local_supported_features(void) {
   return make_command_no_params(HCI_BLE_READ_LOCAL_SPT_FEAT);
+}
+
+static BT_HDR* make_ble_read_antenna_info(void) {
+  return make_command_no_params(HCI_BLE_READ_ANTENNA_INFO);
 }
 
 static BT_HDR* make_ble_read_resolving_list_size(void) {
@@ -323,6 +331,7 @@ static const hci_packet_factory_t interface = {
     make_ble_read_buffer_size,
     make_ble_read_supported_states,
     make_ble_read_local_supported_features,
+    make_ble_read_antenna_info,
     make_ble_read_resolving_list_size,
     make_ble_read_suggested_default_data_length,
     make_ble_read_maximum_advertising_data_length,

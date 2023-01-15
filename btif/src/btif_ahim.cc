@@ -524,10 +524,9 @@ LeAudioConfiguration fetch_offload_audio_config(int profile, int direction) {
   }
   /*  << XPAN Testing Purpose Only */
   if (codec_type == CodecIndex::CODEC_INDEX_SOURCE_APTX_ADAPTIVE_LE) {
-    frame_duration =
-        ((pclient_cbs[profile - 1]->get_min_sup_frame_dur(direction)) / 4) * 1000;
+    frame_duration = pclient_cbs[profile - 1]->get_frame_duration(direction);
     LOG(ERROR) << __func__ << ": fetch frame duration: "
-               << frame_duration << ", from extended metadata";
+               << frame_duration << ", from leaudio_configs.xml";
   }
   uint8_t encoder_version = 0;
 /*if (codec_type == CodecIndex::CODEC_INDEX_SOURCE_APTX_ADAPTIVE_LE ||
@@ -539,6 +538,8 @@ LeAudioConfiguration fetch_offload_audio_config(int profile, int direction) {
     le_vendor_config.samplingFrequencyHz = btif_lc3_sample_rate(
                     pclient_cbs[profile - 1]->get_sample_rate_cb(direction));
     le_vendor_config.frameDurationUs = (int) frame_duration;
+    LOG(ERROR) << __func__ << ": le_vendor_config.frameDurationUs: "
+                           << loghex(le_vendor_config.frameDurationUs);
     le_vendor_config.octetsPerFrame =
                     (int) pclient_cbs[profile - 1]->get_mtu_cb(0, direction);
     le_vendor_config.blocksPerSdu = 1;

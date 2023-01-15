@@ -14,6 +14,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ *
  ******************************************************************************/
 
 /******************************************************************************
@@ -177,6 +181,8 @@ extern void btm_ble_enable_resolving_list_for_platform(uint8_t rl_mask);
 extern void btm_ble_resolving_list_init(uint8_t max_irk_list_sz);
 extern void btm_ble_resolving_list_cleanup(void);
 #endif
+extern void btm_ble_read_antenna_info_complete(uint8_t* p,
+                                               uint16_t evt_len);
 
 extern void btm_ble_adv_init(void);
 extern void* btm_ble_multi_adv_get_ref(uint8_t inst_id);

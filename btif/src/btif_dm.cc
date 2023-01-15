@@ -953,6 +953,12 @@ static void btif_dm_cb_create_bond(const RawAddress& bd_addr,
      __func__);
       btif_dm_cancel_discovery();
       pairing_cb.is_adv_audio = 1;
+    } else {
+      if ((addr_type == BLE_ADDR_RANDOM) &&
+          ((device_type & BT_DEVICE_TYPE_BLE) == BT_DEVICE_TYPE_BLE)) {
+        BTIF_TRACE_DEBUG("%s -- Go via LE Transport ", __func__);
+        transport = BT_TRANSPORT_LE;
+      }
     }
 #endif
     BTIF_TRACE_DEBUG("%s bonding through TRANPORT %d ",

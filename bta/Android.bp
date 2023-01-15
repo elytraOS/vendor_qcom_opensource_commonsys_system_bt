@@ -50,6 +50,7 @@ cc_defaults {
     include_dirs: [
         "vendor/qcom/opensource/commonsys/system/bt",
         "vendor/qcom/opensource/commonsys/system/bt/bta/include",
+        "vendor/qcom/opensource/commonsys/system/bt/bta/direction_finder",
         "vendor/qcom/opensource/commonsys/system/bt/bta/ag",
         "vendor/qcom/opensource/commonsys/system/bt/btcore/include",
         "vendor/qcom/opensource/commonsys/system/bt/hci/include",
@@ -156,6 +157,11 @@ cc_library_static {
         "sys/bta_sys_conn.cc",
         "sys/bta_sys_main.cc",
         "sys/utl.cc",
+        "direction_finder/bta_atp_locator.cc",
+        "direction_finder/gattc_ops_queue.cc",
+        "direction_finder/bta_ctes_main.cc",
+        "direction_finder/gatts_ops_queue.cc",
+        "direction_finder/bta_atp_result_collector.cc",
     ],
 
     whole_static_libs: [

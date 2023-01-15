@@ -14,6 +14,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ *
  ******************************************************************************/
 #ifndef BTM_INT_TYPES_H
 #define BTM_INT_TYPES_H
@@ -935,6 +939,7 @@ typedef struct {
       dynamic_audio_buffer_cb[BTM_CODEC_TYPE_MAX_RECORDS];
   tBTM_CSIP_OPPORTUNISTIC_SCAN_CB* p_csip_scan_cb = NULL;
   bool is_csip_opportunistic_scan_enabled = false;
+  tBTM_BLE_READ_ANTENNA_INFO ble_antenna_info;
 } tBTM_CB;
 
 /* security action for L2CAP COC channels */

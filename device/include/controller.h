@@ -75,6 +75,7 @@ typedef struct controller_t {
   uint8_t (*get_last_features_classic_index)(void);
 
   const bt_device_features_t* (*get_features_ble)(void);
+  const bt_antenna_info_t* (*get_antenna_info_ble)(void);
   const uint8_t* (*get_ble_supported_states)(void);
 
   bool (*supports_simple_pairing)(void);
@@ -101,6 +102,7 @@ typedef struct controller_t {
   bool (*supports_ble_periodic_sync_transfer)(void);
   bool (*supports_ble_iso_broadcaster)(void);
   bool (*supports_ble_periodic_advertising_adi)(void);
+  bool (*supports_ble_aoa)(void);
 
   // Get the cached acl data sizes for the controller.
   uint16_t (*get_acl_data_size_classic)(void);

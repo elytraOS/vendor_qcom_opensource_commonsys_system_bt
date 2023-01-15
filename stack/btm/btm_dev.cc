@@ -50,6 +50,12 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *
+ *****************************************************************************/
 
 /******************************************************************************
  *
@@ -461,6 +467,8 @@ bool is_address_equal(void* data, void* context) {
  *
  ******************************************************************************/
 tBTM_SEC_DEV_REC* btm_find_dev(const RawAddress& bd_addr) {
+  if (btm_cb.sec_dev_rec == NULL) return NULL;
+
   list_node_t* n =
       list_foreach(btm_cb.sec_dev_rec, is_address_equal, (void*)&bd_addr);
   if (n) return static_cast<tBTM_SEC_DEV_REC*>(list_node(n));

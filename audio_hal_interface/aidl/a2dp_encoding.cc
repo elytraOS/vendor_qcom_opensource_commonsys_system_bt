@@ -238,7 +238,7 @@ BluetoothAudioCtrlAck a2dp_ack_to_bt_audio_ctrl_ack(tA2DP_CTRL_ACK ack) {
     case A2DP_CTRL_ACK_INCALL_FAILURE:
       return BluetoothAudioCtrlAck::FAILURE_BUSY;
     case A2DP_CTRL_ACK_DISCONNECT_IN_PROGRESS:
-      return BluetoothAudioCtrlAck::FAILURE_DISCONNECTING;
+      return BluetoothAudioCtrlAck::FAILURE_UNSUPPORTED;
     case A2DP_CTRL_ACK_UNSUPPORTED: /* Offloading but resource failure */
       return BluetoothAudioCtrlAck::FAILURE_UNSUPPORTED;
     case A2DP_CTRL_ACK_FAILURE:

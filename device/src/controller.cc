@@ -79,7 +79,7 @@
 #define BTSNOOP_SOCLOG_PROPERTY "persist.vendor.service.bdroid.soclog"
 
 const bt_event_mask_t BLE_EVENT_MASK = {
-    {0x00, 0x00, 0x00, 0x06, 0x4F, 0x0B, 0xFE, 0x7f}};
+    {0x00, 0x00, 0x00, 0x06, 0x4F, 0x6B, 0xFE, 0x7f}};
 
 const bt_event_mask_t CLASSIC_EVENT_MASK = {HCI_DUMO_EVENT_MASK_EXT};
 
@@ -141,6 +141,7 @@ static uint8_t ble_white_list_size;
 static uint8_t ble_resolving_list_max_size;
 static uint8_t ble_supported_states[BLE_SUPPORTED_STATES_SIZE];
 static bt_device_features_t features_ble;
+static bt_antenna_info_t antenna_info_ble;
 static uint16_t ble_suggested_default_data_length;
 static uint16_t ble_maxium_advertising_data_length;
 #ifdef VLOC_FEATURE
@@ -196,6 +197,7 @@ std::map<uint32_t, uint8_t> vs_codec_transport;
 uint8_t g_adv_audio_prop = 0;
 
 void update_soc_codec_transport();
+static bool supports_ble_aoa();
 
 #define AWAIT_COMMAND(command) \
   static_cast<BT_HDR*>(future_await(hci->transmit_command_futured(command)))
@@ -591,6 +593,22 @@ static future_t* start_up(void) {
       ble_maxium_advertising_data_length = 31;
     }
 
+#ifdef DIR_FINDING_FEATURE
+    char aoa_enabled_prop[PROPERTY_VALUE_MAX] = {'\0'};
+    bool is_aoa_enabled = false;
+    if (property_get("persist.vendor.service.bt.aoa", aoa_enabled_prop, "false")
+        && !strcmp(aoa_enabled_prop, "true")) {
+      is_aoa_enabled = true;
+    }
+    // Send LE Read Antenna Info command next
+    if (supports_ble_aoa() && is_aoa_enabled) {
+      response =
+          AWAIT_COMMAND(packet_factory->make_ble_read_antenna_info());
+      packet_parser->parse_ble_read_antenna_info_response(
+          response, &antenna_info_ble);
+    }
+#endif
+
     // Set the ble event mask next
     response =
         AWAIT_COMMAND(packet_factory->make_ble_set_event_mask(&BLE_EVENT_MASK));
@@ -923,6 +941,12 @@ static const bt_device_features_t* get_features_ble(void) {
   return &features_ble;
 }
 
+static const bt_antenna_info_t* get_antenna_info_ble(void) {
+  CHECK(readable);
+  CHECK(ble_supported);
+  return &antenna_info_ble;
+}
+
 static const uint8_t* get_ble_supported_states(void) {
   CHECK(readable);
   CHECK(ble_supported);
@@ -1059,6 +1083,14 @@ static bool supports_ble_periodic_advertising_adi(void) {
   CHECK(readable);
   CHECK(ble_supported);
   return HCI_LE_PERIODIC_ADVERTISING_ADI_SUPPORTED(features_ble.as_array);
+}
+
+static bool supports_ble_aoa(void) {
+  CHECK(ble_supported);
+  return(HCI_LE_CONN_CTE_REQ_SUPPORTED(features_ble.as_array) &&
+      HCI_LE_CONN_CTE_RSP_SUPPORTED(features_ble.as_array) &&
+      HCI_LE_CONN_ANTENNA_SWITCH_AOA_SUPPORTED(features_ble.as_array) &&
+      HCI_LE_CONN_RX_CTE_SUPPORTED(features_ble.as_array));
 }
 
 static uint16_t get_acl_data_size_classic(void) {
@@ -1319,6 +1351,7 @@ static const controller_t interface = {
     get_last_features_classic_index,
 
     get_features_ble,
+    get_antenna_info_ble,
     get_ble_supported_states,
 
     supports_simple_pairing,
@@ -1345,6 +1378,7 @@ static const controller_t interface = {
     supports_ble_periodic_sync_transfer,
     supports_ble_iso_broadcaster,
     supports_ble_periodic_advertising_adi,
+    supports_ble_aoa,
 
     get_acl_data_size_classic,
     get_acl_data_size_ble,

@@ -14,6 +14,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
+ *  Changes from Qualcomm Innovation Center are provided under the following license:
+ *  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  ******************************************************************************/
 
 #include "bt_types.h"
@@ -143,8 +146,31 @@ void btm_ble_conn_complete(uint8_t* p, UNUSED_ATTR uint16_t evt_len,
     if (!addr_is_rpa || peer_addr_type & BLE_ADDR_TYPE_ID_BIT) {
 #ifdef ADV_AUDIO_FEATURE
       if (is_remote_support_adv_audio(bda)) {
-        match = false;
-        addr_is_rpa = false;
+        RawAddress pseudo_address = bda;
+        uint8_t p_bda_type = bda_type;
+        bool pseudo_match = btm_identity_addr_to_random_pseudo(&pseudo_address,
+                                                            &p_bda_type, true);
+        LOG(INFO) << __func__ << " --- pseudo_match " << pseudo_match;
+        LOG(INFO) << __func__ << " --- pseudo_address " << pseudo_address;
+        LOG(INFO) << __func__ << " --- bda " << bda;
+        bool is_pseudo_adv_audio = false;
+        if (pseudo_match) {
+          if ((pseudo_address != bda) && (pseudo_address != RawAddress::kEmpty)) {
+            if (!is_remote_support_adv_audio(pseudo_address)) {
+              is_pseudo_adv_audio = true;
+              match = btm_identity_addr_to_random_pseudo(&bda, &bda_type, true);
+              LOG(INFO) << __func__ << " --- NOT LEA BD addr " << pseudo_address;
+            } else {
+              LOG(INFO) << __func__ << " --- LEA BD addr " << pseudo_address;
+            }
+          }
+        }
+
+        if (!is_pseudo_adv_audio) {
+          match = false;
+          addr_is_rpa = false;
+          LOG(INFO) << __func__ << " --- BD addr " << bda;
+        }
       } else {
         match = btm_identity_addr_to_random_pseudo(&bda, &bda_type, true);
       }
