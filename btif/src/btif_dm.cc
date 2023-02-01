@@ -1440,11 +1440,23 @@ static void btif_dm_auth_cmpl_evt(tBTA_DM_AUTH_CMPL* p_auth_cmpl) {
 
 
         if (is_crosskey) {
+          bt_property_t prop;
+
+         BTIF_STORAGE_FILL_PROPERTY(&prop,
+           (bt_property_type_t)BT_PROPERTY_REM_DEV_IDENT_BD_ADDR, sizeof(RawAddress), &bd_addr);
+
+         int ret = btif_storage_set_remote_device_property(&pairing_cb.bd_addr, &prop);
+         ASSERTC(ret == BT_STATUS_SUCCESS, "failed to save BT_PROPERTY_REM_DEV_IDENT_BD_ADDR", ret);
+
+         HAL_CBACK(bt_hal_cbacks, remote_device_properties_cb, BT_STATUS_SUCCESS,
+           &pairing_cb.bd_addr, 1, &prop);
+
           // If bonding occurred due to cross-key pairing, send bonding callback
           // for static address now
-          LOG_INFO(LOG_TAG,
-                   "%s: send bonding state update for static address %s",
-                   __func__, bd_addr.ToString().c_str());
+         LOG_INFO(LOG_TAG,
+                   "%s: send bonding state update for static bd_addr %s private (pairing_cb) %s ",
+                   __func__, bd_addr.ToString().c_str(), pairing_cb.bd_addr.ToString().c_str());
+
           bond_state_changed(BT_STATUS_SUCCESS, bd_addr, BT_BOND_STATE_BONDING);
         }
         bond_state_changed(BT_STATUS_SUCCESS, bd_addr, BT_BOND_STATE_BONDED);

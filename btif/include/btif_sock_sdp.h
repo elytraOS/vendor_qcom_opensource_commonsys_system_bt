@@ -14,6 +14,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *
  ******************************************************************************/
 
 #ifndef BTIF_SOCK_SDP_H
@@ -26,7 +30,7 @@
 
 static const bluetooth::Uuid UUID_OBEX_OBJECT_PUSH =
     bluetooth::Uuid::From16Bit(0x1105);
-static const bluetooth::Uuid UUID_PBAP_PCE = bluetooth::Uuid::From16Bit(0x112F);
+static const bluetooth::Uuid UUID_PBAP_PCE = bluetooth::Uuid::From16Bit(0x112E);
 static const bluetooth::Uuid UUID_PBAP_PSE = bluetooth::Uuid::From16Bit(0x112F);
 static const bluetooth::Uuid UUID_MAP_MAS = bluetooth::Uuid::From16Bit(0x1132);
 static const bluetooth::Uuid UUID_SAP = bluetooth::Uuid::From16Bit(0x112D);

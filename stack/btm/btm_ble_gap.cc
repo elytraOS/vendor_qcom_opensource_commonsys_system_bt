@@ -2669,12 +2669,7 @@ void btm_ble_update_inq_result(tINQ_DB_ENT* p_i, uint8_t addr_type,
       BTM_TRACE_DEBUG("BR/EDR NOT support bit not set, treat as DUMO");
       p_cur->device_type |= BT_DEVICE_TYPE_DUMO;
     } else {
-      if ((p_cur->flag & BTM_BLE_DMT_HOST_SPT) != 0) {
-        p_cur->device_type |= BT_DEVICE_TYPE_DUMO;
-        BTM_TRACE_DEBUG("Random address, -- treating device as DUMO only");
-      } else {
         BTM_TRACE_DEBUG("Random address, treating device as LE only");
-      }
     }
   } else {
     BTM_TRACE_DEBUG("BR/EDR NOT SUPPORT bit set, LE only device");

@@ -246,7 +246,7 @@ void btif_ahim_update_src_metadata (const source_metadata_t& source_metadata) {
       std::unique_lock<std::mutex> guard(src_metadata_wait_mutex_);
       src_metadata_wait = false;
       pclient_cbs[AUDIO_GROUP_MGR - 1]->src_meta_update(source_metadata);
-      src_metadata_wait_cv.wait_for(guard, std::chrono::milliseconds(100),
+      src_metadata_wait_cv.wait_for(guard, std::chrono::milliseconds(3200),
                         []{return src_metadata_wait;});
       BTIF_TRACE_IMP("%s: src waiting completed", __func__);
     }
@@ -269,7 +269,7 @@ void btif_ahim_update_sink_metadata (const sink_metadata_t& sink_metadata) {
       std::unique_lock<std::mutex> guard(snk_metadata_wait_mutex_);
       snk_metadata_wait = false;
       pclient_cbs[AUDIO_GROUP_MGR - 1]->snk_meta_update(sink_metadata);
-      snk_metadata_wait_cv.wait_for(guard, std::chrono::milliseconds(100),
+      snk_metadata_wait_cv.wait_for(guard, std::chrono::milliseconds(3200),
                         []{return snk_metadata_wait;});
       BTIF_TRACE_IMP("%s: snk waiting completed", __func__);
     }

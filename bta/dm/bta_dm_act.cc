@@ -1498,7 +1498,9 @@ void bta_dm_search_start(tBTA_DM_MSG* p_data) {
 
   APPL_TRACE_DEBUG("%s avoid_scatter=%d", __func__,
                    p_bta_dm_cfg->avoid_scatter);
-
+#ifdef ADV_AUDIO_FEATURE
+  bta_dm_reset_adv_audio_device_db();
+#endif
   if (p_bta_dm_cfg->avoid_scatter &&
       (p_data->search.rs_res == BTA_DM_RS_NONE) &&
       bta_dm_check_av(BTA_DM_API_SEARCH_EVT)) {
@@ -2641,9 +2643,9 @@ static void bta_dm_discover_next_device(void) {
  ******************************************************************************/
 static void bta_dm_discover_device(const RawAddress& remote_bd_addr) {
   tBT_TRANSPORT transport = BT_TRANSPORT_BR_EDR;
+  tBLE_ADDR_TYPE addr_type;
   if (bta_dm_search_cb.transport == BTA_TRANSPORT_UNKNOWN) {
     tBT_DEVICE_TYPE dev_type;
-    tBLE_ADDR_TYPE addr_type;
 
     BTM_ReadDevInfo(remote_bd_addr, &dev_type, &addr_type);
     if (dev_type == BT_DEVICE_TYPE_BLE || addr_type == BLE_ADDR_RANDOM)
@@ -2667,8 +2669,10 @@ static void bta_dm_discover_device(const RawAddress& remote_bd_addr) {
                      bta_dm_search_cb.p_btm_inq_info->appl_knows_rem_name);
   }
   if ((bta_dm_search_cb.p_btm_inq_info) &&
-      (bta_dm_search_cb.p_btm_inq_info->results.device_type ==
-       BT_DEVICE_TYPE_BLE) &&
+      ((bta_dm_search_cb.p_btm_inq_info->results.device_type ==
+        BT_DEVICE_TYPE_BLE)  || ((bta_dm_search_cb.p_btm_inq_info->results.device_type ==
+        BT_DEVICE_TYPE_DUMO) && (addr_type == BLE_ADDR_RANDOM)))
+        &&
       (bta_dm_search_cb.state == BTA_DM_SEARCH_ACTIVE)) {
     /* Do not perform RNR for LE devices at inquiry complete*/
     bta_dm_search_cb.name_discover_done = true;
@@ -5383,6 +5387,9 @@ void bta_dm_ble_config_local_privacy(tBTA_DM_MSG* p_data) {
 void bta_dm_ble_observe(tBTA_DM_MSG* p_data) {
   tBTM_STATUS status;
   if (p_data->ble_observe.start) {
+#ifdef ADV_AUDIO_FEATURE
+    bta_dm_reset_adv_audio_device_db();
+#endif
     /*Save the  callback to be called when a scan results are available */
     bta_dm_search_cb.p_scan_cback = p_data->ble_observe.p_cback;
     status = BTM_BleObserve(true, p_data->ble_observe.duration,

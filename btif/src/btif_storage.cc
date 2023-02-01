@@ -1369,15 +1369,13 @@ bt_status_t btif_storage_load_bonded_devices(void) {
                                    remote_properties[num_props]);
       num_props++;
 
-      char addr_map[1024] = "";
-      int addr_len = RawAddress::kLength;
-      BTIF_STORAGE_GET_REMOTE_PROP(p_remote_addr, (bt_property_type_t)BT_PROPERTY_REM_DEV_IDENT_BD_ADDR,
-                                   addr_map, addr_len,
-                                   remote_properties[num_props]);
-      RawAddress::FromString(addr_map, mapping_addr);
-      remote_properties[num_props].val = &mapping_addr;
-      remote_properties[num_props].len = RawAddress::kLength;
-      num_props++;
+      RawAddress map_addr = btif_get_map_address(*p_remote_addr);
+      if (map_addr != RawAddress::kEmpty) {
+        remote_properties[num_props].type = (bt_property_type_t)BT_PROPERTY_REM_DEV_IDENT_BD_ADDR;
+        remote_properties[num_props].val = &map_addr;
+        remote_properties[num_props].len = sizeof(RawAddress);
+        num_props++;
+      }
 
       btif_storage_get_remote_services(p_remote_addr, remote_uuids,
         sizeof(remote_uuids));
