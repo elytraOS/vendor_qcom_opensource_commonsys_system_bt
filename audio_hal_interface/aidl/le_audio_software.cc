@@ -150,11 +150,11 @@ bool LeAudioTransport::GetPresentationPosition(uint64_t* remote_delay_report_ns,
             << data_position_.tv_nsec
             << "s, delay report=" << remote_delay_report_ms_ << " msec.";
   if (remote_delay_report_ns != nullptr) {
-    *remote_delay_report_ns = remote_delay_report_ms_ * 1000000u;
+    *remote_delay_report_ns = (uint64_t)(remote_delay_report_ms_ * 1000000u);
   }
   if (total_bytes_processed != nullptr)
-    *total_bytes_processed = total_bytes_processed_;
-  if (data_position != nullptr) *data_position = data_position_;
+    *total_bytes_processed = (uint64_t)total_bytes_processed_;
+  if (data_position != nullptr) *data_position = (timespec)data_position_;
 
   return true;
 }
@@ -233,6 +233,11 @@ void LeAudioTransport::LogBytesProcessed(size_t bytes_processed) {
 void LeAudioTransport::SetRemoteDelay(uint16_t delay_report_ms) {
   LOG(INFO) << __func__ << ": delay_report=" << delay_report_ms << " msec";
   remote_delay_report_ms_ = delay_report_ms;
+}
+
+uint16_t LeAudioTransport::GetRemoteDelay() {
+  LOG(INFO) << __func__ << ": delay_report=" << remote_delay_report_ms_ << " msec";
+  return remote_delay_report_ms_;
 }
 
 const PcmConfiguration& LeAudioTransport::LeAudioGetSelectedHalPcmConfig() {
@@ -342,6 +347,10 @@ void LeAudioSinkTransport::SetRemoteDelay(uint16_t delay_report_ms) {
   transport_->SetRemoteDelay(delay_report_ms);
 }
 
+uint16_t LeAudioSinkTransport::GetRemoteDelay() {
+  return transport_->GetRemoteDelay();
+}
+
 const PcmConfiguration& LeAudioSinkTransport::LeAudioGetSelectedHalPcmConfig() {
   return transport_->LeAudioGetSelectedHalPcmConfig();
 }
@@ -433,6 +442,10 @@ void LeAudioSourceTransport::LogBytesWritten(size_t bytes_written) {
 
 void LeAudioSourceTransport::SetRemoteDelay(uint16_t delay_report_ms) {
   transport_->SetRemoteDelay(delay_report_ms);
+}
+
+uint16_t LeAudioSourceTransport::GetRemoteDelay() {
+  return transport_->GetRemoteDelay();
 }
 
 const PcmConfiguration&
@@ -541,6 +554,10 @@ void LeAudioClientInterface::Sink::SetRemoteDelay(uint16_t delay_report_ms) {
 
   get_aidl_transport_instance(is_broadcaster_)->SetRemoteDelay(
       delay_report_ms);
+}
+
+uint16_t LeAudioClientInterface::Sink::GetRemoteDelay() {
+  return get_aidl_transport_instance(is_broadcaster_)->GetRemoteDelay();
 }
 
 void LeAudioClientInterface::Sink::StartSession() {
@@ -679,6 +696,10 @@ void LeAudioClientInterface::Source::SetRemoteDelay(uint16_t delay_report_ms) {
   LOG(INFO) << __func__ << ": delay_report_ms=" << delay_report_ms << " ms";
   return aidl::le_audio::LeAudioSourceTransport::instance->SetRemoteDelay(
       delay_report_ms);
+}
+
+uint16_t LeAudioClientInterface::Source::GetRemoteDelay() {
+  return aidl::le_audio::LeAudioSourceTransport::instance->GetRemoteDelay();
 }
 
 void LeAudioClientInterface::Source::StartSession() {

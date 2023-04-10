@@ -74,7 +74,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 #endif
 #include <aidl/vendor/qti/hardware/bluetooth/audio/LeAudioVendorConfiguration.h>
 #include <aidl/vendor/qti/hardware/bluetooth/audio/VendorCodecType.h>
-#include "osi/include/properties.h"
 
 using bluetooth::audio::aidl::le_audio::LeAudioClientInterface;
 
@@ -249,6 +248,17 @@ void btif_ahim_update_src_metadata (const source_metadata_t& source_metadata) {
       src_metadata_wait_cv.wait_for(guard, std::chrono::milliseconds(3200),
                         []{return src_metadata_wait;});
       BTIF_TRACE_IMP("%s: src waiting completed", __func__);
+    }
+  }
+}
+
+void btif_ahim_update_params (uint16_t delay, uint8_t mode) {
+  // pass on the callbacks to ACM only for new vendor
+  if(btif_ahim_is_aosp_aidl_hal_enabled()) {
+    if (pclient_cbs[AUDIO_GROUP_MGR - 1] &&
+        pclient_cbs[AUDIO_GROUP_MGR - 1]->params_update) {
+      BTIF_TRACE_IMP("%s: calling updateParams for Audio Group Manager", __func__);
+      pclient_cbs[AUDIO_GROUP_MGR - 1]->params_update(delay, mode);
     }
   }
 }
@@ -516,19 +526,15 @@ LeAudioConfiguration fetch_offload_audio_config(int profile, int direction) {
 #ifdef ADV_AUDIO_FEATURE
   bool is_lc3q_supported = false;
   CodecIndex codec_type = (CodecIndex) pclient_cbs[profile - 1]->get_codec_type(direction);
-  /*  >> XPAN Testing Purpose Only */
-  char r4_aidl_value[PROPERTY_VALUE_MAX] = "true";
-  property_get("persist.vendor.service.bt.test_aidl_r4", r4_aidl_value, "false");
-  if (std::string{r4_aidl_value, 4} == "true") {
-    codec_type =  CodecIndex::CODEC_INDEX_SOURCE_APTX_ADAPTIVE_R4;
-  }
-  /*  << XPAN Testing Purpose Only */
-  if (codec_type == CodecIndex::CODEC_INDEX_SOURCE_APTX_ADAPTIVE_LE) {
-    frame_duration = pclient_cbs[profile - 1]->get_frame_duration(direction);
+  if (codec_type == CodecIndex::CODEC_INDEX_SOURCE_APTX_ADAPTIVE_LE ||
+      codec_type == CodecIndex::CODEC_INDEX_SOURCE_APTX_ADAPTIVE_R4) {
+    frame_duration =
+        ((pclient_cbs[profile - 1]->get_min_sup_frame_dur(direction)) / 4) * 1000;
     LOG(ERROR) << __func__ << ": fetch frame duration: "
                << frame_duration << ", from leaudio_configs.xml";
   }
   uint8_t encoder_version = 0;
+  
 /*if (codec_type == CodecIndex::CODEC_INDEX_SOURCE_APTX_ADAPTIVE_LE ||
       pclient_cbs[profile - 1]->get_is_codec_type_lc3q(direction)) {*/
     VendorConfiguration vendor_config;
@@ -543,66 +549,44 @@ LeAudioConfiguration fetch_offload_audio_config(int profile, int direction) {
     le_vendor_config.octetsPerFrame =
                     (int) pclient_cbs[profile - 1]->get_mtu_cb(0, direction);
     le_vendor_config.blocksPerSdu = 1;
-
+    le_vendor_config.codecSpecificData =
+                    { 0x0F, //Vendor Metadata Length
+                      0xFF, //Vendor META data type
+                      0x0A, //Qtil ID
+                      0x00,
+                      0x0B, //Vendor Metadata length
+                      0x10, //LC3Q Type
+                      pclient_cbs[profile - 1]->get_codec_encoder_version(direction),
+                      pclient_cbs[profile - 1]->get_codec_decoder_version(direction),
+                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 // RFU
+                    };
     encoder_version = pclient_cbs[profile - 1]->get_codec_encoder_version(direction);
     LOG(ERROR) << __func__ << ": codec negotiated encoder version: "
                            << loghex(encoder_version);
-    if (codec_type == CodecIndex::CODEC_INDEX_SOURCE_APTX_ADAPTIVE_LE) {
-      le_vendor_config.vendorCodecType = VendorCodecType::APTX_ADAPTIVE_R3;
-      LOG(ERROR) << __func__ << ": AptX LE metadata params are updated";
-      le_vendor_config.codecSpecificData =
-                      { 0x0F, //Vendor Metadata Length
-                        0xFF, //Vendor META data type
-                        0x0A, //Qtil ID
-                        0x00,
-                        0x0B, //Vendor Metadata length
-                        0x11, //AptX Adaptive LE Type
-                        pclient_cbs[profile - 1]->get_codec_encoder_version(direction),
-                        pclient_cbs[profile - 1]->get_codec_decoder_version(direction),
-                        pclient_cbs[profile - 1]->get_min_sup_frame_dur(direction),
-                        pclient_cbs[profile - 1]->get_feature_map(direction),
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00 // RFU
-                      };
-    } else if (codec_type == CodecIndex::CODEC_INDEX_SOURCE_APTX_ADAPTIVE_R4) {
+    if (codec_type == CodecIndex::CODEC_INDEX_SOURCE_APTX_ADAPTIVE_LE ||
+        codec_type == CodecIndex::CODEC_INDEX_SOURCE_APTX_ADAPTIVE_R4) {
+      le_vendor_config.codecSpecificData[5] = 0x11; // Aptx Adaptive Type
+      le_vendor_config.codecSpecificData[8] = pclient_cbs[profile - 1]->get_min_sup_frame_dur(direction);
+      le_vendor_config.codecSpecificData[9] = pclient_cbs[profile - 1]->get_feature_map(direction);
+      if (codec_type == CodecIndex::CODEC_INDEX_SOURCE_APTX_ADAPTIVE_R4) {
         le_vendor_config.vendorCodecType = VendorCodecType::APTX_ADAPTIVE_R4;
+        LOG(ERROR) << __func__ << ": AptX R4 metadata params are updated";
         for (int i = 0; i < 4; i++) {
-       /* le_vendor_config.codecSpecificData.push_back((pclient_cbs[profile - 1]->get_mode_cb(direction) &
-          (0xff <<((3 - i)*8))) >> ((3 - i)*8)); */
-       /*  >> XPAN Testing Purpose Only */
-          le_vendor_config.codecSpecificData.push_back((0x02 & (0xff <<((3 - i)*8))) >> ((3 - i)*8));
-       /*  << XPAN Testing Purpose Only */
+          le_vendor_config.codecSpecificData.push_back((pclient_cbs[profile - 1]->get_mode_cb() &
+          (0xff <<((3 - i)*8))) >> ((3 - i)*8));
         }
-        le_vendor_config.codecSpecificData.push_back(0x0F); //Vendor Metadata Length
-        le_vendor_config.codecSpecificData.push_back(0xFF); //Vendor META data type
-        le_vendor_config.codecSpecificData.push_back(0x0A); //Qtil ID
-        le_vendor_config.codecSpecificData.push_back(0x00);
-        le_vendor_config.codecSpecificData.push_back(0x0B); //Vendor Metadata length
-        le_vendor_config.codecSpecificData.push_back(0x11);//Vendor META data type - Supported features for AptX
-        le_vendor_config.codecSpecificData.push_back(pclient_cbs[profile - 1]->get_codec_encoder_version(direction));
-        le_vendor_config.codecSpecificData.push_back(pclient_cbs[profile - 1]->get_codec_decoder_version(direction));
-        le_vendor_config.codecSpecificData.push_back(pclient_cbs[profile - 1]->get_min_sup_frame_dur(direction));
-        le_vendor_config.codecSpecificData.push_back(pclient_cbs[profile - 1]->get_feature_map(direction));
-        le_vendor_config.codecSpecificData.push_back(0x00);
-        le_vendor_config.codecSpecificData.push_back(0x00);
-        le_vendor_config.codecSpecificData.push_back(0x00);
-        le_vendor_config.codecSpecificData.push_back(0x00);
-        le_vendor_config.codecSpecificData.push_back(0x00);
-        le_vendor_config.codecSpecificData.push_back(0x00);
+        for (int i = 4; i < 6; i++) {
+          le_vendor_config.codecSpecificData.push_back((unicastSinkClientInterface->GetRemoteDelay() &
+          (0xff <<((5 - i)*8))) >> ((5 - i)*8));
+        }
+      } else {
+        le_vendor_config.vendorCodecType = VendorCodecType::APTX_ADAPTIVE_R3;
+          LOG(ERROR) << __func__ << ": AptX LE metadata params are updated";
+      }
     } else {
       is_lc3q_supported = true;
       le_vendor_config.vendorCodecType = VendorCodecType::LC3Q;
       LOG(ERROR) << __func__ << ": Lc3q params are updated";
-      le_vendor_config.codecSpecificData =
-                      { 0x0F, //Vendor Metadata Length
-                        0xFF, //Vendor META data type
-                        0x0A, //Qtil ID
-                        0x00,
-                        0x0B, //Vendor Metadata length
-                        0x10, //LC3Q Type
-                        pclient_cbs[profile - 1]->get_codec_encoder_version(direction),
-                        pclient_cbs[profile - 1]->get_codec_decoder_version(direction),
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 // RFU
-                      };
     }
 
     for (int i = 0; i < 16; i++) {
@@ -1212,6 +1196,30 @@ size_t btif_ahim_read(uint8_t* p_buf, uint32_t len) {
   return bluetooth::audio::aidl::a2dp::read(p_buf, len);
 }
 
+#ifdef ADV_AUDIO_FEATURE
+void btif_ahim_update_audio_config() {
+  AudioConfigurationAIDL lea_tx_config, lea_rx_config;
+  CodecIndex codec_type =
+    (CodecIndex) pclient_cbs[AUDIO_GROUP_MGR - 1]->get_codec_type(TX_ONLY_CONFIG);
+  if (codec_type == CodecIndex::CODEC_INDEX_SOURCE_APTX_ADAPTIVE_R4) {
+    if (!leAudio_get_selected_hal_codec_config(&lea_tx_config, AUDIO_GROUP_MGR,
+                                                TX_ONLY_CONFIG)) {
+      LOG(ERROR) << __func__ << ": Failed to get CodecConfiguration";
+      return;
+    }
+    if(unicastSinkClientInterface)
+      unicastSinkClientInterface->UpdateAudioConfigToHal(lea_tx_config);
+  }
+}
+
+uint16_t btif_ahim_get_remote_delay() {
+if(unicastSinkClientInterface)
+  return unicastSinkClientInterface->GetRemoteDelay();
+else
+  return 0xFFFF;
+}
+#endif
+
 void btif_ahim_set_remote_delay(uint16_t delay_report, uint8_t profile) {
   BTIF_TRACE_IMP("%s: AIDL, profile: %d, delay_report: %d",
                                         __func__, profile, delay_report);
@@ -1236,7 +1244,6 @@ void btif_ahim_set_remote_delay(uint16_t delay_report, uint8_t profile) {
         if(unicastSourceClientInterface)
           unicastSourceClientInterface->SetRemoteDelay(delay_report);
       }
-
     } else if (profile == BROADCAST) {
       if (broadcastSinkClientInterface) {
         broadcastSinkClientInterface->SetRemoteDelay(delay_report);

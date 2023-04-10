@@ -16,6 +16,14 @@
  *
  ******************************************************************************/
 
+/******************************************************************************
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *
+ *****************************************************************************/
+
 #define LOG_TAG "bt_btif_config"
 
 #include "btif_config.h"
@@ -81,6 +89,7 @@ static void timer_config_save_cb(void* data);
 static void btif_config_write(uint16_t event, char* p_param);
 static bool is_factory_reset(void);
 static void delete_config_files(void);
+static void btif_config_file_update(config_t* config);
 static void btif_config_remove_unpaired(config_t* config);
 static void btif_config_remove_restricted(config_t* config);
 
@@ -674,17 +683,75 @@ static void btif_config_write(UNUSED_ATTR uint16_t event,
 
   std::unique_lock<std::recursive_mutex> lock(config_lock);
   rename(CONFIG_FILE_PATH, CONFIG_BACKUP_PATH);
-  config_t* config_paired = config_new_clone(config);
 
-  if (config_paired != NULL) {
-    btif_config_remove_unpaired(config_paired);
-    config_save(config_paired, CONFIG_FILE_PATH);
-    config_free(config_paired);
-  }
+  btif_config_file_update(config);
+
   if (is_common_criteria_mode()) {
     get_bluetooth_keystore_interface()->set_encrypt_key_or_remove_key(
         CONFIG_FILE_PREFIX, CONFIG_FILE_HASH);
   }
+}
+
+static void btif_config_file_update(config_t* conf) {
+  CHECK(conf != NULL);
+  int paired_devices = 0;
+  int entries=0;
+  int new_config_entries=0;
+  config_t* config_new_conf = config_new_empty();
+
+  CHECK(config_new_conf != NULL);
+  // The paired config used to carry information about
+  // discovered devices during regular inquiry scans.
+  // We remove these now and cache them in memory instead.
+  const config_section_node_t* snode = config_section_begin(conf);
+
+  BTIF_TRACE_WARNING("%s", __func__);
+
+  while (snode != config_section_end(conf)) {
+    section_t* section = config_section(snode);
+    entries++;
+    if (RawAddress::IsValidAddress(section->name)) {
+      if (!section_has_key(section, "LinkKey") &&
+          !section_has_key(section, "LE_KEY_PENC") &&
+          !section_has_key(section, "LE_KEY_PID") &&
+          !section_has_key(section, "LE_KEY_PCSRK") &&
+          !section_has_key(section, "LE_KEY_LENC") &&
+          !section_has_key(section, "LE_KEY_LCSRK") &&
+          !section_has_key(section, "AvrcpCtVersion") &&
+          !section_has_key(section, "AvrcpFeatures") &&
+          !section_has_key(section, "TwsPlusPeerAddr") &&
+          !section_has_key(section, "Codecs")) {
+        snode = config_section_next(snode);
+        continue;
+      }
+      paired_devices++;
+    }
+
+    if (section) {
+      for (const list_node_t* node_entry = list_begin(section->entries);
+           node_entry != list_end(section->entries);
+           node_entry = list_next(node_entry)) {
+        entry_t* entry = static_cast<entry_t*>(list_node(node_entry));
+        config_set_string(config_new_conf, section->name, entry->key, entry->value);
+      }
+    }
+
+    new_config_entries++;
+    snode = config_section_next(snode);
+  }
+
+  BTIF_TRACE_WARNING("%s: entries: %d paired_devices: %d, new_config_entries: %d",
+      __func__, entries, paired_devices, new_config_entries);
+
+  if (new_config_entries > 0) {
+    config_save(config_new_conf, CONFIG_FILE_PATH);
+  }
+
+  config_free(config_new_conf);
+
+  // should only happen once, at initial load time
+  if (btif_config_devices_loaded == -1)
+    btif_config_devices_loaded = paired_devices;
 }
 
 static void btif_config_remove_unpaired(config_t* conf) {

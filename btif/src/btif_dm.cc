@@ -122,7 +122,7 @@
 #include "device/include/device_iot_config.h"
 #include "stack_interface.h"
 #ifdef ADV_AUDIO_FEATURE
-#include "btif_dm_adv_audio.h"
+#include "btif/include/btif_dm_adv_audio.h"
 #include "bta_dm_adv_audio.h"
 #endif
 
@@ -4498,3 +4498,8 @@ void btif_store_adv_audio_pair_info(RawAddress bd_addr) {
       ret);
 }
 #endif
+
+void btif_dm_get_le_services(RawAddress *bd_addr, int transport) {
+  BTIF_TRACE_WARNING("%s %s", __func__, bd_addr->ToString().c_str());
+  bta_dm_gatt_le_services(*bd_addr);
+}

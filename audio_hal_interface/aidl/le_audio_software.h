@@ -127,6 +127,8 @@ class LeAudioTransport {
 
   void SetRemoteDelay(uint16_t delay_report_ms);
 
+  uint16_t GetRemoteDelay();
+
   const PcmConfiguration& LeAudioGetSelectedHalPcmConfig();
 
   void LeAudioSetSelectedHalPcmConfig(uint32_t sample_rate_hz, uint8_t bit_rate,
@@ -181,6 +183,8 @@ class LeAudioSinkTransport
 
   void SetRemoteDelay(uint16_t delay_report_ms);
 
+  uint16_t GetRemoteDelay();
+
   const PcmConfiguration& LeAudioGetSelectedHalPcmConfig();
 
   void LeAudioSetSelectedHalPcmConfig(uint32_t sample_rate_hz, uint8_t bit_rate,
@@ -230,6 +234,8 @@ class LeAudioSourceTransport
 
   void SetRemoteDelay(uint16_t delay_report_ms);
 
+  uint16_t GetRemoteDelay();
+
   const PcmConfiguration& LeAudioGetSelectedHalPcmConfig();
 
   void LeAudioSetSelectedHalPcmConfig(uint32_t sample_rate_hz, uint8_t bit_rate,
@@ -262,6 +268,7 @@ class LeAudioClientInterface {
     virtual void Cleanup() = 0;
     virtual void SetPcmParameters(const PcmParameters& params) = 0;
     virtual void SetRemoteDelay(uint16_t delay_report_ms) = 0;
+    virtual uint16_t GetRemoteDelay() = 0;
     virtual void StartSession() = 0;
     virtual void StopSession() = 0;
     virtual tA2DP_CTRL_CMD GetPendingCmd() = 0;
@@ -284,6 +291,7 @@ class LeAudioClientInterface {
     void Cleanup() override;
     void SetPcmParameters(const PcmParameters& params) override;
     void SetRemoteDelay(uint16_t delay_report_ms) override;
+    uint16_t GetRemoteDelay() override;
     void StartSession() override;
     void StopSession() override;
     tA2DP_CTRL_CMD GetPendingCmd() override;
@@ -311,6 +319,7 @@ class LeAudioClientInterface {
     void Cleanup() override;
     void SetPcmParameters(const PcmParameters& params) override;
     void SetRemoteDelay(uint16_t delay_report_ms) override;
+    uint16_t GetRemoteDelay() override;
     void StartSession() override;
     void StopSession() override;
     tA2DP_CTRL_CMD GetPendingCmd() override;

@@ -905,6 +905,12 @@ typedef struct {
   uint8_t lmp_version;
 } tBTA_DM_LMP_VER_INFO;
 
+typedef struct {
+  RawAddress peer_address;
+  int gatt_if;
+  bool disc_progress = false;
+  bool is_lea_device = false;
+} tBTA_DM_LE_GATT_INFO;
 
 extern const uint16_t bta_service_id_to_uuid_lkup_tbl[];
 

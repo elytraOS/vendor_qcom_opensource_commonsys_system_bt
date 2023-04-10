@@ -123,5 +123,8 @@ void btif_inc_sdp_attempts();
 void btif_reset_pairing_cb() ;
 void btif_reset_sdp_attempts();
 int btif_dm_is_adv_audio();
-
+void btif_dm_get_le_services(RawAddress *bd_addr, int transport);
+#ifdef ADV_AUDIO_FEATURE
+void btif_store_adv_audio_pair_info(RawAddress bd_addr);
+#endif
 #endif

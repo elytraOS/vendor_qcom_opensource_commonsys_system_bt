@@ -14,6 +14,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  ******************************************************************************/
 
 /******************************************************************************
@@ -5398,7 +5401,12 @@ extern tBTM_STATUS btm_sec_execute_procedure(tBTM_SEC_DEV_REC* p_dev_rec) {
   tBTM_INQUIRY_VAR_ST *p_inq = &btm_cb.btm_inq_vars;
 
   /* There is a chance that we are getting name.  Wait until done. */
-  if (p_dev_rec->sec_state != 0) return (BTM_CMD_STARTED);
+  if ((p_dev_rec->sec_state != BTM_SEC_STATE_IDLE) &&
+      (p_dev_rec->sec_state != BTM_SEC_STATE_DISCONNECTING_BLE)) {
+    LOG_DEBUG(LOG_TAG,
+        "Security state is not idle indicating RNR or security is in progress");
+    return (BTM_CMD_STARTED);
+  }
 
   /* If any security is required, get the name first */
   if (!(p_dev_rec->sec_flags & BTM_SEC_NAME_KNOWN) &&

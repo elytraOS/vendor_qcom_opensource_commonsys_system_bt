@@ -337,6 +337,7 @@ static void bta_ag_sco_disc_cback(uint16_t sco_idx) {
                  status != HCI_ERR_PEER_USER &&
                  status !=HCI_ERR_HOST_REJECT_SECURITY &&
                  bta_ag_cb.sco.p_curr_scb != NULL &&
+        bta_ag_cb.sco.p_curr_scb->post_sco != BTA_AG_POST_SCO_CALL_END &&
         bta_ag_cb.sco.p_curr_scb->no_of_xsco_retry == 0 ) {
        char value[PROPERTY_VALUE_MAX] = {0};
        osi_property_get("vendor.bt.pts.certification", value, "false");

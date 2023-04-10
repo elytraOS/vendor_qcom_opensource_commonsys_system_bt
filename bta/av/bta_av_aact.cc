@@ -2462,8 +2462,10 @@ void bta_av_setconfig_rej(tBTA_AV_SCB* p_scb, tBTA_AV_DATA* p_data) {
 void bta_av_discover_req(tBTA_AV_SCB* p_scb, tBTA_AV_DATA* p_data) {
   /* send avdtp discover request */
   APPL_TRACE_DEBUG("%s: hdi is: %d , pscb is %x\n", __func__, p_scb->hdi, p_scb);
-  if (AVDT_DiscoverReq(p_scb->peer_addr, p_scb->sep_info,
-      BTA_AV_NUM_SEPS, bta_av_dt_cback[p_scb->hdi]) != AVDT_SUCCESS) {
+  uint16_t status;
+  status = AVDT_DiscoverReq(p_scb->peer_addr, p_scb->sep_info,
+      BTA_AV_NUM_SEPS, bta_av_dt_cback[p_scb->hdi]);
+  if ((status != AVDT_SUCCESS) && (status != AVDT_BUSY)) {
     APPL_TRACE_ERROR("bta_av_discover_req command couldn't be sent because of resource constraint");
     bta_av_ssm_execute(p_scb, BTA_AV_STR_DISC_FAIL_EVT, p_data);
   }

@@ -171,7 +171,6 @@ static void bta_dm_bond_cancel_complete_cback(tBTM_STATUS result);
 static bool bta_dm_read_remote_device_name(const RawAddress& bd_addr,
                                            tBT_TRANSPORT transport);
 static void bta_dm_discover_device(const RawAddress& remote_bd_addr);
-
 static void bta_dm_sys_hw_cback(tBTA_SYS_HW_EVT status);
 static void bta_dm_disable_search_and_disc(void);
 
@@ -183,6 +182,8 @@ static void bta_dm_gattc_register(void);
 static void btm_dm_start_gatt_discovery(const RawAddress& bd_addr);
 static void bta_dm_cancel_gatt_discovery(const RawAddress& bd_addr);
 static void bta_dm_gattc_callback(tBTA_GATTC_EVT event, tBTA_GATTC* p_data);
+static void bta_dm_le_gattc_callback(tBTA_GATTC_EVT event, tBTA_GATTC* p_data);
+
 
 extern tBTA_DM_CONTRL_STATE bta_dm_pm_obtain_controller_state(void);
 
@@ -350,6 +351,8 @@ extern DEV_CLASS local_device_default_class;
 
 // Stores the local Input/Output Capabilities of the Bluetooth device.
 static uint8_t btm_local_io_caps;
+
+tBTA_DM_LE_GATT_INFO bta_dm_le_gatt_cb;
 
 /** Initialises the BT device manager */
 void bta_dm_enable(tBTA_DM_MSG* p_data) {
@@ -1588,6 +1591,7 @@ void bta_dm_search_cancel(UNUSED_ATTR tBTA_DM_MSG* p_data) {
  *
  ******************************************************************************/
 void bta_dm_discover(tBTA_DM_MSG* p_data) {
+  APPL_TRACE_EVENT("%s ", __func__);
   size_t len = sizeof(Uuid) * p_data->discover.num_uuid;
   APPL_TRACE_EVENT("%s services_to_search=0x%04X, sdp_search=%d", __func__,
                    p_data->discover.services, p_data->discover.sdp_search);
@@ -5934,4 +5938,114 @@ void bta_dm_ble_subrate_request(tBTA_DM_MSG* p_data) {
   }
 }
 
+void bta_dm_le_gatt_open_evt(tBTA_GATTC_OPEN* p_data) {
+  VLOG(1) << "bta_dm_le_gatt_open_evt peer_dbaddr:"
+          << bta_dm_le_gatt_cb.peer_address
+          << " connected_bda=" << p_data->remote_bda;
 
+  if (p_data->status == GATT_SUCCESS) {
+    btm_dm_start_disc_gatt_services(p_data->conn_id);
+  } else {
+    bta_dm_gatt_disc_complete(GATT_INVALID_CONN_ID, p_data->status);
+  }
+}
+
+static void bta_dm_le_gattc_callback(tBTA_GATTC_EVT event, tBTA_GATTC* p_data) {
+  APPL_TRACE_DEBUG(" bta_dm_le_gattc_callback event = %d", event);
+
+  switch (event) {
+    case BTA_GATTC_OPEN_EVT:
+      APPL_TRACE_DEBUG(" bta_dm_le_gattc_callback BTA_GATTC_OPEN_EVT");
+      bta_dm_le_gatt_cb.disc_progress = false;
+      bta_dm_le_gatt_open_evt(&p_data->open);
+      break;
+
+    case BTA_GATTC_SEARCH_RES_EVT:
+#ifdef ADV_AUDIO_FEATURE
+      if (!bta_dm_le_gatt_cb.is_lea_device) {
+        if (is_le_audio_service(p_data->srvc_res.service_uuid.uuid)) {
+          APPL_TRACE_DEBUG(" bta_dm_le_gattc_callback LE AUDIO UUID");
+          bta_dm_le_gatt_cb.is_lea_device = true;
+          //This remote supports LE AUDIO. So reuse LE AUDIO API's to derive role
+          btif_store_adv_audio_pair_info(bta_dm_le_gatt_cb.peer_address);
+          bta_dm_update_adv_audio_db(bta_dm_le_gatt_cb.peer_address);
+        }
+      }
+#endif
+      break;
+
+    case BTA_GATTC_SEARCH_CMPL_EVT:
+        APPL_TRACE_DEBUG(" bta_dm_le_gattc_callback BTA_GATTC_SEARCH_CMPL_EVT");
+#ifdef ADV_AUDIO_FEATURE
+      if (bta_dm_le_gatt_cb.is_lea_device && !bta_dm_le_gatt_cb.disc_progress) {
+        APPL_TRACE_DEBUG(" bta_dm_le_gattc_callback LE AUDIO ROLE DISC");
+        //This remote supports LE AUDIO. So reuse LE AUDIO API's to derive role
+        tBTA_GATTC_OPEN p_tmp_data;
+        p_tmp_data.remote_bda = bta_dm_le_gatt_cb.peer_address;
+        p_tmp_data.conn_id = p_data->search_cmpl.conn_id;
+        p_tmp_data.transport = BT_TRANSPORT_LE;
+        bta_dm_le_gatt_cb.disc_progress = true;
+        bta_dm_set_adv_audio_dev_info(&p_tmp_data);
+        bta_adv_audio_update_bond_db(bta_dm_le_gatt_cb.peer_address, GATT_TRANSPORT_LE);
+
+        if (p_data->search_cmpl.status == 0) {
+          bta_get_adv_audio_role(bta_dm_le_gatt_cb.peer_address,
+              p_data->search_cmpl.conn_id,
+              p_data->search_cmpl.status);
+          if (is_adv_audio_group_supported(bta_dm_le_gatt_cb.peer_address,
+                p_data->search_cmpl.conn_id)) {
+            bta_find_adv_audio_group_instance(p_data->search_cmpl.conn_id,
+                p_data->search_cmpl.status, bta_dm_le_gatt_cb.peer_address);
+          }
+        } else {
+          APPL_TRACE_DEBUG("%s Discovery Failure ", __func__);
+          bta_le_audio_service_search_failed(&bta_dm_le_gatt_cb.peer_address);
+        }
+      }
+#endif
+      break;
+
+    case BTA_GATTC_CLOSE_EVT:
+      APPL_TRACE_ERROR(" BTA_GATTC_CLOSE_EVT reason = %d,"
+        "p_data conn_id %d, search conn_id %d", p_data->close.reason,
+        p_data->close.conn_id,bta_dm_search_cb.conn_id);
+        BTA_GATTC_AppDeregister(bta_dm_le_gatt_cb.gatt_if);
+        bta_dm_le_gatt_cb.gatt_if = GATT_INVALID_CONN_ID;
+        bta_dm_le_gatt_cb.is_lea_device = false;
+        bta_dm_le_gatt_cb.disc_progress = false;
+        bta_dm_le_gatt_cb.peer_address = RawAddress::kEmpty;
+
+#ifdef ADV_AUDIO_FEATURE
+      if (is_remote_support_adv_audio(p_data->close.remote_bda)) {
+        bta_dm_reset_adv_audio_dev_info(p_data->close.remote_bda);
+      }
+#endif
+      break;
+    default:
+      break;
+  }
+}
+
+void bta_dm_gatt_le_services(RawAddress bd_addr) {
+  APPL_TRACE_WARNING(" bta_dm_gatt_le_services");
+
+  if (bta_dm_le_gatt_cb.disc_progress) {
+    APPL_TRACE_ERROR("Already dm le discovery in progress. Ignore it");
+    return;
+  }
+  bta_dm_le_gatt_cb.peer_address = bd_addr;
+
+  BTA_GATTC_AppRegister(bta_dm_le_gattc_callback,
+      base::Bind([](uint8_t client_id, uint8_t status) {
+        if (status == GATT_SUCCESS) {
+
+          APPL_TRACE_DEBUG("bta_dm_gatt_le_services Client Id: %d",
+              client_id);
+          bta_dm_le_gatt_cb.gatt_if = client_id;
+          bta_dm_le_gatt_cb.disc_progress = true;
+          BTA_GATTC_Open(client_id, bta_dm_le_gatt_cb.peer_address,
+                  true, GATT_TRANSPORT_LE, false);
+        }
+        }), false);
+
+}

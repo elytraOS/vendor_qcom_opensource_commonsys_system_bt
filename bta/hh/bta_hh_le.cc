@@ -1752,7 +1752,7 @@ void bta_hh_le_open_fail(tBTA_HH_DEV_CB* p_cb, tBTA_HH_DATA* p_data) {
                           : BTA_HH_ERR;
   else
     conn_dat.status = p_cb->status;
-
+  p_cb->hid_handle =  BTA_HH_INVALID_HANDLE;
   /* Report OPEN fail event */
   (*bta_hh_cb.p_cback)(BTA_HH_OPEN_EVT, (tBTA_HH*)&conn_dat);
 }

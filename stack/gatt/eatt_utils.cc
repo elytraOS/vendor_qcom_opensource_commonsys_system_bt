@@ -882,8 +882,13 @@ void gatt_send_pending_notif(tGATT_TCB& tcb, uint16_t cid) {
         return;
       }
 
-      p_buf = (tGATT_VALUE*)&(notif_q->front());
-      if (p_buf != NULL) {
+      while (!notif_q->empty()) {
+        p_buf = (tGATT_VALUE*)&(notif_q->front());
+        if (!p_buf) {
+          VLOG(1) << __func__ << " notification op value is NULL";
+          return;
+        }
+
         att_ret = GATTS_HandleValueNotification(p_buf->conn_id, p_buf->handle, p_buf->len,
                                                 p_buf->value);
         if (((att_ret == GATT_CONGESTED) || (att_ret == GATT_NO_CREDITS))
@@ -970,8 +975,13 @@ void gatt_send_pending_rsp(tGATT_TCB& tcb, uint16_t cid) {
         return;
       }
 
-      p_buf = (tGATT_PEND_RSP*)&(gatt_rsp_q->front());
-      if (p_buf != NULL) {
+      while (!gatt_rsp_q->empty()) {
+        p_buf = (tGATT_PEND_RSP*)&(gatt_rsp_q->front());
+        if (!p_buf) {
+          VLOG(1) << __func__ << " GATT Rsp value is NULL";
+          return;
+        }
+
         att_ret = GATTS_SendRsp(p_buf->conn_id, p_buf->trans_id, p_buf->status, p_buf->p_msg);
         if (((att_ret == GATT_CONGESTED) || (att_ret == GATT_NO_CREDITS))
             && p_eatt_bcb->no_credits) {
@@ -1022,8 +1032,13 @@ void gatt_send_pending_disc_rsp(tGATT_TCB& tcb, uint16_t cid) {
         return;
       }
 
-      p_buf = (tGATT_PEND_SRVC_DISC_RSP*)&(gatt_rsp_q->front());
-      if (p_buf != NULL) {
+      while (!gatt_rsp_q->empty()) {
+        p_buf = (tGATT_PEND_SRVC_DISC_RSP*)&(gatt_rsp_q->front());
+        if (!p_buf) {
+          VLOG(1) << __func__ << " GATT srvc disc rsp value is NULL";
+          return;
+        }
+
         att_ret = attp_send_sr_msg(tcb, cid, p_buf->p_msg);
 
         if (((att_ret == GATT_CONGESTED) || (att_ret == GATT_NO_CREDITS))

@@ -16,6 +16,14 @@
  *
  ******************************************************************************/
 
+/******************************************************************************
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *
+*****************************************************************************/
+
 #define LOG_TAG "bt_osi_config"
 
 #include "osi/include/config.h"
@@ -39,11 +47,6 @@
 #include "log/log.h"
 #include "bt_target.h"
 #include <inttypes.h>
-
-typedef struct {
-  char* key;
-  char* value;
-} entry_t;
 
 struct config_t {
   list_t* sections;
@@ -382,7 +385,7 @@ bool section_has_key(const section_t* section,
     if (!strcmp(entry->key, key)) return true;
   }
 
-  return false;;
+  return false;
 }
 
 #if (BT_IOT_LOGGING_ENABLED == TRUE)

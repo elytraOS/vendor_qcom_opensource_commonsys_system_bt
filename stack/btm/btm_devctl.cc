@@ -44,6 +44,7 @@
 
 #include "gatt_int.h"
 #include "hci/include/vendor.h"
+#include "btif/include/btif_api.h"
 
 extern thread_t* bt_workqueue_thread;
 
@@ -61,6 +62,7 @@ extern thread_t* bt_workqueue_thread;
                 */
 
 #define BTM_INFO_TIMEOUT 5 /* 5 seconds for info response */
+#define HCI_VSE_SUBCODE_PARAMS_REPORT 0x12
 
 /******************************************************************************/
 /*            L O C A L    F U N C T I O N     P R O T O T Y P E S            */
@@ -925,6 +927,14 @@ void btm_vendor_specific_evt(uint8_t* p, uint8_t evt_len) {
         break;
     }
     return;
+  } else if (HCI_VSE_SUBCODE_PARAMS_REPORT == vse_subcode){
+    BTM_TRACE_DEBUG ("BTM Event: Vendor Specific params report evt");
+    uint16_t delay;
+    uint8_t mode;
+    STREAM_TO_UINT16(delay, pp);
+    STREAM_TO_UINT8(mode, pp);
+    BTM_TRACE_DEBUG ("%s: Delay value = %x, Mode value = %x", __func__, delay, mode);
+    btif_update_params(delay, mode);
   }
 
   BTM_TRACE_DEBUG("BTM Event: Vendor Specific event from controller");

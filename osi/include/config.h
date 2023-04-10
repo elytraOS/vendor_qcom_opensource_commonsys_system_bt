@@ -33,6 +33,11 @@ typedef struct {
   list_t* entries;
 } section_t;
 
+typedef struct {
+  char* key;
+  char* value;
+} entry_t;
+
 #if (BT_IOT_LOGGING_ENABLED == TRUE)
 typedef int (*compare_func)(const char* first, const char* second);
 #endif
