@@ -912,7 +912,7 @@ static void btif_dm_cb_create_bond(const RawAddress& bd_addr,
   bond_state_changed(BT_STATUS_SUCCESS, bd_addr, BT_BOND_STATE_BONDING);
 
   int device_type;
-  int addr_type;
+  int addr_type = BLE_ADDR_PUBLIC;
   std::string addrstr = bd_addr.ToString();
   const char* bdstr = addrstr.c_str();
   if (transport == BT_TRANSPORT_LE) {

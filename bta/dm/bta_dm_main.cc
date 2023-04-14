@@ -274,7 +274,7 @@ const uint8_t bta_dm_search_disc_active_st_table[][BTA_DM_SEARCH_NUM_COLS] = {
 
     /* Event                        Action 1
        Action 2                    Next State */
-    /* API_SEARCH */ {BTA_DM_SEARCH_IGNORE, BTA_DM_SEARCH_IGNORE,
+    /* API_SEARCH */ {BTA_DM_QUEUE_SEARCH, BTA_DM_SEARCH_IGNORE,
                       BTA_DM_DISCOVER_ACTIVE},
     /* API_SEARCH_CANCEL */ {BTA_DM_SEARCH_CANCEL_NOTIFY, BTA_DM_SEARCH_IGNORE,
                              BTA_DM_SEARCH_CANCELLING},

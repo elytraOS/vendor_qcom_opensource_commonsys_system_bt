@@ -2647,7 +2647,7 @@ static void bta_dm_discover_next_device(void) {
  ******************************************************************************/
 static void bta_dm_discover_device(const RawAddress& remote_bd_addr) {
   tBT_TRANSPORT transport = BT_TRANSPORT_BR_EDR;
-  tBLE_ADDR_TYPE addr_type;
+  tBLE_ADDR_TYPE addr_type = BLE_ADDR_PUBLIC;
   if (bta_dm_search_cb.transport == BTA_TRANSPORT_UNKNOWN) {
     tBT_DEVICE_TYPE dev_type;
 
@@ -5716,8 +5716,20 @@ void btm_dm_start_gatt_discovery(const RawAddress& bd_addr) {
     btm_dm_start_disc_gatt_services(bta_dm_search_cb.conn_id);
   } else {
     if (BTM_IsAclConnectionUp(bd_addr, BT_TRANSPORT_LE)) {
+#ifdef ADV_AUDIO_FEATURE
+      if (is_remote_support_adv_audio(bd_addr)) {
+        APPL_TRACE_DEBUG("%s ADV_AUDIO_DEVICE ", __func__);
+        BTA_GATTC_Open(bta_dm_search_cb.client_if, bd_addr, true,
+            GATT_TRANSPORT_LE, true);
+      } else {
+        APPL_TRACE_DEBUG("%s LEGACY LE DEVICE ", __func__);
+        BTA_GATTC_Open(bta_dm_search_cb.client_if, bd_addr, true,
+            GATT_TRANSPORT_LE, false);
+      }
+#else
       BTA_GATTC_Open(bta_dm_search_cb.client_if, bd_addr, true,
-                     GATT_TRANSPORT_LE, true);
+                     GATT_TRANSPORT_LE, false);
+#endif
     } else {
       //TODO review. Kept qcom Specific change only.
       APPL_TRACE_DEBUG("btm_dm_start_gatt_discovery: ACL is disconnected");

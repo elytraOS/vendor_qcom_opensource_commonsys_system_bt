@@ -1326,6 +1326,8 @@ using SyncReportCb =
                                     uint8_t /*status*/, std::vector<uint8_t> /*data*/)>;
 using SyncLostCb = base::Callback<void(uint16_t /*sync_handle*/)>;
 
+using BigInfoReportCb = base::Callback<void(uint16_t /*sync_handle*/, bool /*encrypted*/)>;
+
 extern void btm_ble_periodic_adv_sync_established(uint8_t *param, uint16_t param_len);
 extern void btm_ble_periodic_adv_report(uint8_t *param, uint16_t param_len);
 extern void btm_ble_periodic_adv_sync_lost(uint8_t *param, uint16_t param_len);
@@ -1350,7 +1352,8 @@ extern void BTM_BleStartPeriodicSync(uint8_t adv_sid, RawAddress address,
                                      uint16_t skip, uint16_t timeout,
                                      StartSyncCb syncCb,
                                      SyncReportCb reportCb,
-                                     SyncLostCb lostCb);
+                                     SyncLostCb lostCb,
+                                     BigInfoReportCb biginfo_reportCb);
 /*******************************************************************************
  *
  * Function         BTM_BleStopPeriodicSync
